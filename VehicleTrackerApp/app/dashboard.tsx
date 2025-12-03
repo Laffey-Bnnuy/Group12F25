@@ -28,9 +28,8 @@ export default function Dashboard() {
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
 
-  // ------------------------------
+  
   // Helpers
-  // ------------------------------
   const kmToMiles = (km: number) => km * 0.621371;
 
   function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -48,12 +47,31 @@ export default function Dashboard() {
     return R * c;
   }
 
-    // ------------------------------
-    // LIVE GPS TRACKING
-    // ------------------------------
-   // ------------------------------
+    
+// LIVE Avg speedTRACKING
+// 1) Timer increases while trip is active
+useEffect(() => {
+  if (!tripID) return;
+
+  const interval = setInterval(() => {
+    setElapsedSec((prev) => prev + 1);
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, [tripID]);
+
+// 2) Live avg speed calculation
+useEffect(() => {
+  if (elapsedSec === 0) return;
+
+  const hours = elapsedSec / 3600;
+  setAvgSpeedKph(distanceKm / hours);
+}, [distanceKm, elapsedSec]);
+    
 // LIVE GPS TRACKING
 // ------------------------------
+
+
 const lastLat = useRef<number | null>(null);
 const lastLon = useRef<number | null>(null);
 const hasSentFirstPointRef = useRef(false);
@@ -65,6 +83,8 @@ async function sendSensor(tripID: number, speed: number, lat: number, lon: numbe
     body: JSON.stringify({ tripID, speed, latitude: lat, longitude: lon }),
   });
 }
+
+
 
 useEffect(() => {
   let subscription: any;
@@ -191,9 +211,8 @@ useEffect(() => {
     }
   };
 
-  // ------------------------------
+ 
   // Fetch Score
-  // ------------------------------
   const fetchDriverScore = async (tID: number) => {
     try {
       const res = await fetch(`${backend}/driver/score/${tID}`);
@@ -202,9 +221,7 @@ useEffect(() => {
     } catch {}
   };
 
-  // ------------------------------
   // Fetch Trip Stats
-  // ------------------------------
   const fetchTripStats = async (tID: number) => {
     try {
       const res = await fetch(`${backend}/trips/${userID}`);
